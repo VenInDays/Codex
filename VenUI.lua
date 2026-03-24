@@ -92,6 +92,13 @@ local function makeButton(parent, text)
     btn.Text = text
     btn.Parent = parent
     corner(btn, sv(10))
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.SurfaceLighter),
+        ColorSequenceKeypoint.new(1, Theme.SurfaceLight),
+    })
+    grad.Rotation = 90
+    grad.Parent = btn
     return btn
 end
 
@@ -214,19 +221,51 @@ function VenUI:CreateWindow(config)
     gui.Parent = PlayerGui
     self._gui = gui
 
+    local dock = Instance.new("Frame")
+    dock.Name = "Dock"
+    dock.Visible = false
+    dock.Size = UDim2.new(0, sv(220), 0, sv(50))
+    dock.Position = UDim2.new(0.5, 0, 1, -sv(24))
+    dock.AnchorPoint = Vector2.new(0.5, 1)
+    dock.BackgroundColor3 = Theme.Surface
+    dock.Parent = gui
+    dock.ZIndex = 50
+    corner(dock, sv(14))
+    stroke(dock, Theme.Accent, 0.3)
+
+    local dockGradient = Instance.new("UIGradient")
+    dockGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Surface),
+        ColorSequenceKeypoint.new(1, Theme.SurfaceLight),
+    })
+    dockGradient.Rotation = 90
+    dockGradient.Parent = dock
+
+    local dockTitle = Instance.new("TextLabel")
+    dockTitle.BackgroundTransparency = 1
+    dockTitle.Text = "VenUI (Minimized)"
+    dockTitle.Font = Enum.Font.GothamSemibold
+    dockTitle.TextSize = sv(12)
+    dockTitle.TextColor3 = Theme.Text
+    dockTitle.TextXAlignment = Enum.TextXAlignment.Left
+    dockTitle.Size = UDim2.new(1, -sv(90), 1, 0)
+    dockTitle.Position = UDim2.new(0, sv(12), 0, 0)
+    dockTitle.Parent = dock
+
     local open = Instance.new("TextButton")
-    open.Name = "Open"
-    open.Visible = false
-    open.Size = UDim2.new(0, sv(60), 0, sv(60))
-    open.Position = UDim2.new(0, sv(14), 1, -sv(84))
+    open.Name = "Restore"
+    open.Size = UDim2.new(0, sv(70), 0, sv(32))
+    open.Position = UDim2.new(1, -sv(8), 0.5, 0)
+    open.AnchorPoint = Vector2.new(1, 0.5)
     open.BackgroundColor3 = Theme.Accent
-    open.Text = "VEN"
-    open.TextScaled = true
+    open.Text = "Open"
+    open.TextScaled = false
+    open.TextSize = sv(12)
     open.TextColor3 = Color3.new(1, 1, 1)
     open.Font = Enum.Font.GothamBold
-    open.Parent = gui
-    corner(open, sv(18))
-    stroke(open, Theme.AccentDark, 0.2)
+    open.Parent = dock
+    open.ZIndex = 51
+    corner(open, sv(10))
 
     local main = Instance.new("Frame")
     main.Name = "Main"
@@ -238,6 +277,14 @@ function VenUI:CreateWindow(config)
     corner(main, sv(18))
     stroke(main, Theme.SurfaceLighter, 0.25)
 
+    local mainGrad = Instance.new("UIGradient")
+    mainGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Background),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(19, 23, 32)),
+    })
+    mainGrad.Rotation = 100
+    mainGrad.Parent = main
+
     local uiscale = Instance.new("UIScale")
     uiscale.Scale = isTouchDevice() and 1.02 or 1
     uiscale.Parent = main
@@ -247,6 +294,13 @@ function VenUI:CreateWindow(config)
     top.BackgroundColor3 = Theme.Surface
     top.Parent = main
     corner(top, sv(18))
+    local topGrad = Instance.new("UIGradient")
+    topGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Surface),
+        ColorSequenceKeypoint.new(1, Theme.SurfaceLight),
+    })
+    topGrad.Rotation = 90
+    topGrad.Parent = top
 
     local title = Instance.new("TextLabel")
     title.BackgroundTransparency = 1
@@ -307,6 +361,13 @@ function VenUI:CreateWindow(config)
     left.Parent = body
     corner(left, sv(14))
     pad(left, sv(8))
+    local leftGrad = Instance.new("UIGradient")
+    leftGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Surface),
+        ColorSequenceKeypoint.new(1, Theme.SurfaceLight),
+    })
+    leftGrad.Rotation = 90
+    leftGrad.Parent = left
 
     local search = Instance.new("TextBox")
     search.Size = UDim2.new(1, 0, 0, sv(34))
@@ -371,14 +432,54 @@ function VenUI:CreateWindow(config)
         end
     end))
 
+    local dockDrag, dockDragInput, dockDragStart, dockStartPos = false, nil, nil, nil
+    dock.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dockDrag = true
+            dockDragStart = input.Position
+            dockStartPos = dock.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dockDrag = false
+                end
+            end)
+        end
+    end)
+    dock.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dockDragInput = input
+        end
+    end)
+    table.insert(self.Connections, UserInputService.InputChanged:Connect(function(input)
+        if dockDrag and input == dockDragInput and dockDragStart and dockStartPos then
+            local delta = input.Position - dockDragStart
+            dock.Position = UDim2.new(
+                dockStartPos.X.Scale,
+                dockStartPos.X.Offset + delta.X,
+                dockStartPos.Y.Scale,
+                dockStartPos.Y.Offset + delta.Y
+            )
+        end
+    end))
+
     minimize.MouseButton1Click:Connect(function()
+        tween(main, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.fromScale(0.7, 0),
+            BackgroundTransparency = 0.25,
+        }).Completed:Wait()
         main.Visible = false
-        open.Visible = true
+        main.Size = UDim2.fromScale(0.94, 0.84)
+        main.BackgroundTransparency = 0
+        dock.Visible = true
     end)
 
     open.MouseButton1Click:Connect(function()
+        dock.Visible = false
         main.Visible = true
-        open.Visible = false
+        main.Size = UDim2.fromScale(0.7, 0)
+        tween(main, TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.fromScale(0.94, 0.84),
+        })
     end)
 
     close.MouseButton1Click:Connect(function()
@@ -430,6 +531,9 @@ function VenUI:CreateWindow(config)
     local function updateActiveButton(active)
         for _, tabInfo in ipairs(window._tabs) do
             tabInfo.Button.BackgroundColor3 = (tabInfo == active) and Theme.Accent or Theme.SurfaceLighter
+            if tabInfo.Indicator then
+                tabInfo.Indicator.Visible = (tabInfo == active)
+            end
         end
     end
 
@@ -459,7 +563,17 @@ function VenUI:CreateWindow(config)
             Icon = icon,
             Button = tabButton,
             Page = page,
+            Indicator = nil,
         }
+
+        local indicator = Instance.new("Frame")
+        indicator.Size = UDim2.new(0, sv(3), 1, -sv(8))
+        indicator.Position = UDim2.new(0, sv(4), 0, sv(4))
+        indicator.BackgroundColor3 = Theme.Accent
+        indicator.Visible = false
+        indicator.Parent = tabButton
+        corner(indicator, sv(99))
+        tab.Indicator = indicator
 
         local function container(height)
             local f = Instance.new("Frame")

@@ -4,8 +4,9 @@
 
 ## Điểm nâng cấp chính
 
-- Giao diện mới: topbar có title/subtitle, sidebar có search tab, style card hiện đại.
+- Giao diện mới: topbar có title/subtitle, sidebar có search tab, gradient + accent indicator để dễ nhìn hơn.
 - Mobile-first: touch target lớn hơn, kéo thả cửa sổ bằng touch/mouse, nút mở lại UI khi minimize.
+- Minimize tiện hơn: khi thu nhỏ sẽ xuất hiện **dock bar** có nút `Open` và có thể kéo dock tới vị trí thuận tay.
 - API nâng cấp: thêm `AddSection`, `AddParagraph`, `AddKeybind`, `AddColorPicker`, `SetTitle`, `SetSubtitle`, `SelectTab`.
 - Quản lý state: `VenUI.Flags`, `GetFlag`, `SetFlag`, `SaveConfig`, `LoadConfig`.
 
